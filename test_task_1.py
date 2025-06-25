@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from faker import Faker
 
 
 def configure_driver():
@@ -22,34 +23,40 @@ def browser():
     driver.quit()
 
 
-def test_form_validation(browser):
+@pytest.fixture
+def fake():
+    """Фикстура для генерации тестовых данных"""
+    return Faker('ru_RU')  # Русская локализация
+
+
+def test_form_validation(browser, fake):
     """Тест заполнения формы и проверки валидации"""
     # 1. Открытие страницы
     browser.get("https://bonigarcia.dev/selenium-webdriver-java/data-types.html")
     wait = WebDriverWait(browser, 10)
 
-    # 2. Заполнение формы
+    # 2. Генерация тестовых данных
     form_data = {
-        "first-name": "Иван",
-        "last-name": "Петров",
-        "address": "Ленина, 55-3",
-        "e-mail": "test@skypro.com",
-        "phone": "+7985899998787",
-        "zip-code": "",
-        "city": "Москва",
+        "first-name": fake.first_name(),
+        "last-name": fake.last_name(),
+        "address": fake.street_address(),
+        "e-mail": fake.email(),
+        "phone": fake.phone_number(),
+        "zip-code": "",  # Оставляем пустым для теста валидации
+        "city": fake.city(),
         "country": "Россия",
-        "job-position": "QA",
-        "company": "SkyPro"
+        "job-position": fake.job(),
+        "company": fake.company()
     }
 
+    # 3. Заполнение формы
     for field, value in form_data.items():
         browser.find_element(By.NAME, field).send_keys(value)
 
-    # 3. Отправка формы
+    # 4. Отправка формы
     browser.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
 
-    # 4. Проверка подсветки полей
-    # Ждем применения стилей
+    # 5. Проверка подсветки полей
     wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".alert.py-2")))
 
     # Проверка, что Zip code подсвечен красным
